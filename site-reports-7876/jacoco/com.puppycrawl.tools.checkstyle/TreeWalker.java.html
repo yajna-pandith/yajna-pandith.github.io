@@ -1,0 +1,467 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TreeWalker.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">checkstyle</a> &gt; <a href="index.source.html" class="el_package">com.puppycrawl.tools.checkstyle</a> &gt; <span class="el_source">TreeWalker.java</span></div><h1>TreeWalker.java</h1><pre class="source lang-java linenums">////////////////////////////////////////////////////////////////////////////////
+// checkstyle: Checks Java source code for adherence to a set of rules.
+// Copyright (C) 2001-2020 the original author or authors.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+////////////////////////////////////////////////////////////////////////////////
+
+package com.puppycrawl.tools.checkstyle;
+
+import java.io.File;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
+import com.puppycrawl.tools.checkstyle.api.AbstractFileSetCheck;
+import com.puppycrawl.tools.checkstyle.api.AutomaticBean;
+import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
+import com.puppycrawl.tools.checkstyle.api.Configuration;
+import com.puppycrawl.tools.checkstyle.api.Context;
+import com.puppycrawl.tools.checkstyle.api.DetailAST;
+import com.puppycrawl.tools.checkstyle.api.ExternalResourceHolder;
+import com.puppycrawl.tools.checkstyle.api.FileContents;
+import com.puppycrawl.tools.checkstyle.api.FileText;
+import com.puppycrawl.tools.checkstyle.api.LocalizedMessage;
+import com.puppycrawl.tools.checkstyle.utils.TokenUtil;
+
+/**
+ * Responsible for walking an abstract syntax tree and notifying interested
+ * checks at each each node.
+ *
+ */
+@FileStatefulCheck
+public final class TreeWalker extends AbstractFileSetCheck implements ExternalResourceHolder {
+
+    /** Maps from token name to ordinary checks. */
+<span class="fc" id="L55">    private final Map&lt;String, Set&lt;AbstractCheck&gt;&gt; tokenToOrdinaryChecks =</span>
+        new HashMap&lt;&gt;();
+
+    /** Maps from token name to comment checks. */
+<span class="fc" id="L59">    private final Map&lt;String, Set&lt;AbstractCheck&gt;&gt; tokenToCommentChecks =</span>
+            new HashMap&lt;&gt;();
+
+    /** Registered ordinary checks, that don't use comment nodes. */
+<span class="fc" id="L63">    private final Set&lt;AbstractCheck&gt; ordinaryChecks = new HashSet&lt;&gt;();</span>
+
+    /** Registered comment checks. */
+<span class="fc" id="L66">    private final Set&lt;AbstractCheck&gt; commentChecks = new HashSet&lt;&gt;();</span>
+
+    /** The ast filters. */
+<span class="fc" id="L69">    private final Set&lt;TreeWalkerFilter&gt; filters = new HashSet&lt;&gt;();</span>
+
+    /** The sorted set of messages. */
+<span class="fc" id="L72">    private final SortedSet&lt;LocalizedMessage&gt; messages = new TreeSet&lt;&gt;();</span>
+
+    /** Context of child components. */
+    private Context childContext;
+
+    /** A factory for creating submodules (i.e. the Checks) */
+    private ModuleFactory moduleFactory;
+
+    /**
+     * Creates a new {@code TreeWalker} instance.
+     */
+<span class="fc" id="L83">    public TreeWalker() {</span>
+<span class="fc" id="L84">        setFileExtensions(&quot;java&quot;);</span>
+<span class="fc" id="L85">    }</span>
+
+    /**
+     * Sets the module factory for creating child modules (Checks).
+     * @param moduleFactory the factory
+     */
+    public void setModuleFactory(ModuleFactory moduleFactory) {
+<span class="fc" id="L92">        this.moduleFactory = moduleFactory;</span>
+<span class="fc" id="L93">    }</span>
+
+    @Override
+    public void finishLocalSetup() {
+<span class="fc" id="L97">        final DefaultContext checkContext = new DefaultContext();</span>
+<span class="fc" id="L98">        checkContext.add(&quot;severity&quot;, getSeverity());</span>
+<span class="fc" id="L99">        checkContext.add(&quot;tabWidth&quot;, String.valueOf(getTabWidth()));</span>
+<span class="fc" id="L100">        childContext = checkContext;</span>
+<span class="fc" id="L101">    }</span>
+
+    /**
+     * {@inheritDoc} Creates child module.
+     * @noinspection ChainOfInstanceofChecks
+     */
+    @Override
+    public void setupChild(Configuration childConf)
+            throws CheckstyleException {
+<span class="fc" id="L110">        final String name = childConf.getName();</span>
+        final Object module;
+
+        try {
+<span class="fc" id="L114">            module = moduleFactory.createModule(name);</span>
+<span class="fc bfc" id="L115" title="All 2 branches covered.">            if (module instanceof AutomaticBean) {</span>
+<span class="fc" id="L116">                final AutomaticBean bean = (AutomaticBean) module;</span>
+<span class="fc" id="L117">                bean.contextualize(childContext);</span>
+<span class="fc" id="L118">                bean.configure(childConf);</span>
+            }
+        }
+<span class="fc" id="L121">        catch (final CheckstyleException ex) {</span>
+<span class="fc" id="L122">            throw new CheckstyleException(&quot;cannot initialize module &quot; + name</span>
+<span class="fc" id="L123">                    + &quot; - &quot; + ex.getMessage(), ex);</span>
+<span class="fc" id="L124">        }</span>
+<span class="fc bfc" id="L125" title="All 2 branches covered.">        if (module instanceof AbstractCheck) {</span>
+<span class="fc" id="L126">            final AbstractCheck check = (AbstractCheck) module;</span>
+<span class="fc" id="L127">            check.init();</span>
+<span class="fc" id="L128">            registerCheck(check);</span>
+<span class="fc" id="L129">        }</span>
+<span class="fc bfc" id="L130" title="All 2 branches covered.">        else if (module instanceof TreeWalkerFilter) {</span>
+<span class="fc" id="L131">            final TreeWalkerFilter filter = (TreeWalkerFilter) module;</span>
+<span class="fc" id="L132">            filters.add(filter);</span>
+<span class="fc" id="L133">        }</span>
+        else {
+<span class="fc" id="L135">            throw new CheckstyleException(</span>
+                &quot;TreeWalker is not allowed as a parent of &quot; + name
+                        + &quot; Please review 'Parent Module' section for this Check in web&quot;
+                        + &quot; documentation if Check is standard.&quot;);
+        }
+<span class="fc" id="L140">    }</span>
+
+    @Override
+    protected void processFiltered(File file, FileText fileText) throws CheckstyleException {
+        // check if already checked and passed the file
+<span class="fc bfc" id="L145" title="All 4 branches covered.">        if (!ordinaryChecks.isEmpty() || !commentChecks.isEmpty()) {</span>
+<span class="fc" id="L146">            final FileContents contents = getFileContents();</span>
+<span class="fc" id="L147">            final DetailAST rootAST = JavaParser.parse(contents);</span>
+<span class="fc bfc" id="L148" title="All 2 branches covered.">            if (!ordinaryChecks.isEmpty()) {</span>
+<span class="fc" id="L149">                walk(rootAST, contents, AstState.ORDINARY);</span>
+            }
+<span class="fc bfc" id="L151" title="All 2 branches covered.">            if (!commentChecks.isEmpty()) {</span>
+<span class="fc" id="L152">                final DetailAST astWithComments = JavaParser.appendHiddenCommentNodes(rootAST);</span>
+<span class="fc" id="L153">                walk(astWithComments, contents, AstState.WITH_COMMENTS);</span>
+            }
+<span class="fc bfc" id="L155" title="All 2 branches covered.">            if (filters.isEmpty()) {</span>
+<span class="fc" id="L156">                addMessages(messages);</span>
+            }
+            else {
+<span class="fc" id="L159">                final SortedSet&lt;LocalizedMessage&gt; filteredMessages =</span>
+<span class="fc" id="L160">                    getFilteredMessages(file.getAbsolutePath(), contents, rootAST);</span>
+<span class="fc" id="L161">                addMessages(filteredMessages);</span>
+            }
+<span class="fc" id="L163">            messages.clear();</span>
+        }
+<span class="fc" id="L165">    }</span>
+
+    /**
+     * Returns filtered set of {@link LocalizedMessage}.
+     * @param fileName path to the file
+     * @param fileContents the contents of the file
+     * @param rootAST root AST element {@link DetailAST} of the file
+     * @return filtered set of messages
+     */
+    private SortedSet&lt;LocalizedMessage&gt; getFilteredMessages(
+            String fileName, FileContents fileContents, DetailAST rootAST) {
+<span class="fc" id="L176">        final SortedSet&lt;LocalizedMessage&gt; result = new TreeSet&lt;&gt;(messages);</span>
+<span class="fc bfc" id="L177" title="All 2 branches covered.">        for (LocalizedMessage element : messages) {</span>
+<span class="fc" id="L178">            final TreeWalkerAuditEvent event =</span>
+                    new TreeWalkerAuditEvent(fileContents, fileName, element, rootAST);
+<span class="fc bfc" id="L180" title="All 2 branches covered.">            for (TreeWalkerFilter filter : filters) {</span>
+<span class="fc bfc" id="L181" title="All 2 branches covered.">                if (!filter.accept(event)) {</span>
+<span class="fc" id="L182">                    result.remove(element);</span>
+<span class="fc" id="L183">                    break;</span>
+                }
+<span class="fc" id="L185">            }</span>
+<span class="fc" id="L186">        }</span>
+<span class="fc" id="L187">        return result;</span>
+    }
+
+    /**
+     * Register a check for a given configuration.
+     * @param check the check to register
+     * @throws CheckstyleException if an error occurs
+     */
+    private void registerCheck(AbstractCheck check) throws CheckstyleException {
+        final int[] tokens;
+<span class="fc" id="L197">        final Set&lt;String&gt; checkTokens = check.getTokenNames();</span>
+<span class="fc bfc" id="L198" title="All 2 branches covered.">        if (checkTokens.isEmpty()) {</span>
+<span class="fc" id="L199">            tokens = check.getDefaultTokens();</span>
+        }
+        else {
+<span class="fc" id="L202">            tokens = check.getRequiredTokens();</span>
+
+            // register configured tokens
+<span class="fc" id="L205">            final int[] acceptableTokens = check.getAcceptableTokens();</span>
+<span class="fc" id="L206">            Arrays.sort(acceptableTokens);</span>
+<span class="fc bfc" id="L207" title="All 2 branches covered.">            for (String token : checkTokens) {</span>
+<span class="fc" id="L208">                final int tokenId = TokenUtil.getTokenId(token);</span>
+<span class="fc bfc" id="L209" title="All 2 branches covered.">                if (Arrays.binarySearch(acceptableTokens, tokenId) &gt;= 0) {</span>
+<span class="fc" id="L210">                    registerCheck(token, check);</span>
+                }
+                else {
+<span class="fc" id="L213">                    final String message = String.format(Locale.ROOT, &quot;Token \&quot;%s\&quot; was &quot;</span>
+                            + &quot;not found in Acceptable tokens list in check %s&quot;,
+<span class="fc" id="L215">                            token, check.getClass().getName());</span>
+<span class="fc" id="L216">                    throw new CheckstyleException(message);</span>
+                }
+<span class="fc" id="L218">            }</span>
+        }
+<span class="fc bfc" id="L220" title="All 2 branches covered.">        for (int element : tokens) {</span>
+<span class="fc" id="L221">            registerCheck(element, check);</span>
+        }
+<span class="fc bfc" id="L223" title="All 2 branches covered.">        if (check.isCommentNodesRequired()) {</span>
+<span class="fc" id="L224">            commentChecks.add(check);</span>
+        }
+        else {
+<span class="fc" id="L227">            ordinaryChecks.add(check);</span>
+        }
+<span class="fc" id="L229">    }</span>
+
+    /**
+     * Register a check for a specified token id.
+     * @param tokenId the id of the token
+     * @param check the check to register
+     * @throws CheckstyleException if Check is misconfigured
+     */
+    private void registerCheck(int tokenId, AbstractCheck check) throws CheckstyleException {
+<span class="fc" id="L238">        registerCheck(TokenUtil.getTokenName(tokenId), check);</span>
+<span class="fc" id="L239">    }</span>
+
+    /**
+     * Register a check for a specified token name.
+     * @param token the name of the token
+     * @param check the check to register
+     * @throws CheckstyleException if Check is misconfigured
+     */
+    private void registerCheck(String token, AbstractCheck check) throws CheckstyleException {
+<span class="fc bfc" id="L248" title="All 2 branches covered.">        if (check.isCommentNodesRequired()) {</span>
+<span class="fc" id="L249">            tokenToCommentChecks.computeIfAbsent(token, empty -&gt; new HashSet&lt;&gt;()).add(check);</span>
+        }
+<span class="fc bfc" id="L251" title="All 2 branches covered.">        else if (TokenUtil.isCommentType(token)) {</span>
+<span class="fc" id="L252">            final String message = String.format(Locale.ROOT, &quot;Check '%s' waits for comment type &quot;</span>
+                    + &quot;token ('%s') and should override 'isCommentNodesRequired()' &quot;
+<span class="fc" id="L254">                    + &quot;method to return 'true'&quot;, check.getClass().getName(), token);</span>
+<span class="fc" id="L255">            throw new CheckstyleException(message);</span>
+        }
+        else {
+<span class="fc" id="L258">            tokenToOrdinaryChecks.computeIfAbsent(token, empty -&gt; new HashSet&lt;&gt;()).add(check);</span>
+        }
+<span class="fc" id="L260">    }</span>
+
+    /**
+     * Initiates the walk of an AST.
+     * @param ast the root AST
+     * @param contents the contents of the file the AST was generated from.
+     * @param astState state of AST.
+     */
+    private void walk(DetailAST ast, FileContents contents,
+            AstState astState) {
+<span class="fc" id="L270">        notifyBegin(ast, contents, astState);</span>
+<span class="fc" id="L271">        processIter(ast, astState);</span>
+<span class="fc" id="L272">        notifyEnd(ast, astState);</span>
+<span class="fc" id="L273">    }</span>
+
+    /**
+     * Notify checks that we are about to begin walking a tree.
+     * @param rootAST the root of the tree.
+     * @param contents the contents of the file the AST was generated from.
+     * @param astState state of AST.
+     */
+    private void notifyBegin(DetailAST rootAST, FileContents contents,
+            AstState astState) {
+        final Set&lt;AbstractCheck&gt; checks;
+
+<span class="fc bfc" id="L285" title="All 2 branches covered.">        if (astState == AstState.WITH_COMMENTS) {</span>
+<span class="fc" id="L286">            checks = commentChecks;</span>
+        }
+        else {
+<span class="fc" id="L289">            checks = ordinaryChecks;</span>
+        }
+
+<span class="fc bfc" id="L292" title="All 2 branches covered.">        for (AbstractCheck check : checks) {</span>
+<span class="fc" id="L293">            check.setFileContents(contents);</span>
+<span class="fc" id="L294">            check.clearMessages();</span>
+<span class="fc" id="L295">            check.beginTree(rootAST);</span>
+<span class="fc" id="L296">        }</span>
+<span class="fc" id="L297">    }</span>
+
+    /**
+     * Notify checks that we have finished walking a tree.
+     * @param rootAST the root of the tree.
+     * @param astState state of AST.
+     */
+    private void notifyEnd(DetailAST rootAST, AstState astState) {
+        final Set&lt;AbstractCheck&gt; checks;
+
+<span class="fc bfc" id="L307" title="All 2 branches covered.">        if (astState == AstState.WITH_COMMENTS) {</span>
+<span class="fc" id="L308">            checks = commentChecks;</span>
+        }
+        else {
+<span class="fc" id="L311">            checks = ordinaryChecks;</span>
+        }
+
+<span class="fc bfc" id="L314" title="All 2 branches covered.">        for (AbstractCheck check : checks) {</span>
+<span class="fc" id="L315">            check.finishTree(rootAST);</span>
+<span class="fc" id="L316">            messages.addAll(check.getMessages());</span>
+<span class="fc" id="L317">        }</span>
+<span class="fc" id="L318">    }</span>
+
+    /**
+     * Notify checks that visiting a node.
+     * @param ast the node to notify for.
+     * @param astState state of AST.
+     */
+    private void notifyVisit(DetailAST ast, AstState astState) {
+<span class="fc" id="L326">        final Collection&lt;AbstractCheck&gt; visitors = getListOfChecks(ast, astState);</span>
+
+<span class="fc bfc" id="L328" title="All 2 branches covered.">        if (visitors != null) {</span>
+<span class="fc bfc" id="L329" title="All 2 branches covered.">            for (AbstractCheck check : visitors) {</span>
+<span class="fc" id="L330">                check.visitToken(ast);</span>
+<span class="fc" id="L331">            }</span>
+        }
+<span class="fc" id="L333">    }</span>
+
+    /**
+     * Notify checks that leaving a node.
+     * @param ast
+     *        the node to notify for
+     * @param astState state of AST.
+     */
+    private void notifyLeave(DetailAST ast, AstState astState) {
+<span class="fc" id="L342">        final Collection&lt;AbstractCheck&gt; visitors = getListOfChecks(ast, astState);</span>
+
+<span class="fc bfc" id="L344" title="All 2 branches covered.">        if (visitors != null) {</span>
+<span class="fc bfc" id="L345" title="All 2 branches covered.">            for (AbstractCheck check : visitors) {</span>
+<span class="fc" id="L346">                check.leaveToken(ast);</span>
+<span class="fc" id="L347">            }</span>
+        }
+<span class="fc" id="L349">    }</span>
+
+    /**
+     * Method returns list of checks.
+     *
+     * @param ast
+     *            the node to notify for
+     * @param astState
+     *            state of AST.
+     * @return list of visitors
+     */
+    private Collection&lt;AbstractCheck&gt; getListOfChecks(DetailAST ast, AstState astState) {
+        final Collection&lt;AbstractCheck&gt; visitors;
+<span class="fc" id="L362">        final String tokenType = TokenUtil.getTokenName(ast.getType());</span>
+
+<span class="fc bfc" id="L364" title="All 2 branches covered.">        if (astState == AstState.WITH_COMMENTS) {</span>
+<span class="fc" id="L365">            visitors = tokenToCommentChecks.get(tokenType);</span>
+        }
+        else {
+<span class="fc" id="L368">            visitors = tokenToOrdinaryChecks.get(tokenType);</span>
+        }
+<span class="fc" id="L370">        return visitors;</span>
+    }
+
+    @Override
+    public void destroy() {
+<span class="fc" id="L375">        ordinaryChecks.forEach(AbstractCheck::destroy);</span>
+<span class="fc" id="L376">        commentChecks.forEach(AbstractCheck::destroy);</span>
+<span class="fc" id="L377">        super.destroy();</span>
+<span class="fc" id="L378">    }</span>
+
+    @Override
+    public Set&lt;String&gt; getExternalResourceLocations() {
+<span class="fc" id="L382">        final Set&lt;String&gt; ordinaryChecksResources =</span>
+<span class="fc" id="L383">                getExternalResourceLocationsOfChecks(ordinaryChecks);</span>
+<span class="fc" id="L384">        final Set&lt;String&gt; commentChecksResources =</span>
+<span class="fc" id="L385">                getExternalResourceLocationsOfChecks(commentChecks);</span>
+<span class="fc" id="L386">        final Set&lt;String&gt; filtersResources =</span>
+<span class="fc" id="L387">                getExternalResourceLocationsOfFilters();</span>
+<span class="fc" id="L388">        final int resultListSize = commentChecksResources.size()</span>
+<span class="fc" id="L389">                + ordinaryChecksResources.size()</span>
+<span class="fc" id="L390">                + filtersResources.size();</span>
+<span class="fc" id="L391">        final Set&lt;String&gt; resourceLocations = new HashSet&lt;&gt;(resultListSize);</span>
+<span class="fc" id="L392">        resourceLocations.addAll(ordinaryChecksResources);</span>
+<span class="fc" id="L393">        resourceLocations.addAll(commentChecksResources);</span>
+<span class="fc" id="L394">        resourceLocations.addAll(filtersResources);</span>
+<span class="fc" id="L395">        return resourceLocations;</span>
+    }
+
+    /**
+     * Returns a set of external configuration resource locations which are used by the filters set.
+     * @return a set of external configuration resource locations which are used by the filters set.
+     */
+    private Set&lt;String&gt; getExternalResourceLocationsOfFilters() {
+<span class="fc" id="L403">        final Set&lt;String&gt; externalConfigurationResources = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L404">        filters.stream().filter(filter -&gt; filter instanceof ExternalResourceHolder)</span>
+<span class="fc" id="L405">                .forEach(filter -&gt; {</span>
+<span class="fc" id="L406">                    final Set&lt;String&gt; checkExternalResources =</span>
+<span class="fc" id="L407">                        ((ExternalResourceHolder) filter).getExternalResourceLocations();</span>
+<span class="fc" id="L408">                    externalConfigurationResources.addAll(checkExternalResources);</span>
+<span class="fc" id="L409">                });</span>
+<span class="fc" id="L410">        return externalConfigurationResources;</span>
+    }
+
+    /**
+     * Returns a set of external configuration resource locations which are used by the checks set.
+     * @param checks a set of checks.
+     * @return a set of external configuration resource locations which are used by the checks set.
+     */
+    private static Set&lt;String&gt; getExternalResourceLocationsOfChecks(Set&lt;AbstractCheck&gt; checks) {
+<span class="fc" id="L419">        final Set&lt;String&gt; externalConfigurationResources = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L420">        checks.stream().filter(check -&gt; check instanceof ExternalResourceHolder).forEach(check -&gt; {</span>
+<span class="fc" id="L421">            final Set&lt;String&gt; checkExternalResources =</span>
+<span class="fc" id="L422">                ((ExternalResourceHolder) check).getExternalResourceLocations();</span>
+<span class="fc" id="L423">            externalConfigurationResources.addAll(checkExternalResources);</span>
+<span class="fc" id="L424">        });</span>
+<span class="fc" id="L425">        return externalConfigurationResources;</span>
+    }
+
+    /**
+     * Processes a node calling interested checks at each node.
+     * Uses iterative algorithm.
+     * @param root the root of tree for process
+     * @param astState state of AST.
+     */
+    private void processIter(DetailAST root, AstState astState) {
+<span class="fc" id="L435">        DetailAST curNode = root;</span>
+<span class="fc bfc" id="L436" title="All 2 branches covered.">        while (curNode != null) {</span>
+<span class="fc" id="L437">            notifyVisit(curNode, astState);</span>
+<span class="fc" id="L438">            DetailAST toVisit = curNode.getFirstChild();</span>
+<span class="fc bfc" id="L439" title="All 4 branches covered.">            while (curNode != null &amp;&amp; toVisit == null) {</span>
+<span class="fc" id="L440">                notifyLeave(curNode, astState);</span>
+<span class="fc" id="L441">                toVisit = curNode.getNextSibling();</span>
+<span class="fc" id="L442">                curNode = curNode.getParent();</span>
+            }
+<span class="fc" id="L444">            curNode = toVisit;</span>
+<span class="fc" id="L445">        }</span>
+<span class="fc" id="L446">    }</span>
+
+    /**
+     * State of AST.
+     * Indicates whether tree contains certain nodes.
+     */
+<span class="fc" id="L452">    private enum AstState {</span>
+
+        /**
+         * Ordinary tree.
+         */
+<span class="fc" id="L457">        ORDINARY,</span>
+
+        /**
+         * AST contains comment nodes.
+         */
+<span class="fc" id="L462">        WITH_COMMENTS,</span>
+
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
