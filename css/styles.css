@@ -592,3 +592,82 @@ footer {
     left: 0;
     color: var(--accent-color);
 }
+
+/* Recommendation Section Styles */
+.recommendation-card {
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 3rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    margin-top: 2rem;
+    position: relative;
+}
+
+.recommendation-card::before {
+    content: '"';
+    position: absolute;
+    top: 2rem;
+    left: 2rem;
+    font-size: 4rem;
+    color: var(--primary-color);
+    opacity: 0.1;
+    font-family: Georgia, serif;
+}
+
+.recommendation-content {
+    font-size: 1.1rem;
+    color: var(--text-color);
+    line-height: 1.8;
+}
+
+.recommendation-content p {
+    margin-bottom: 1.5rem;
+}
+
+.recommendation-content strong {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.recommendation-author {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.author-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.author-title {
+    color: var(--light-text);
+    margin-bottom: 1rem;
+}
+
+.author-linkedin {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.author-linkedin:hover {
+    color: var(--hover-color);
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .recommendation-card {
+        padding: 2rem;
+    }
+
+    .recommendation-content {
+        font-size: 1rem;
+    }
+}
