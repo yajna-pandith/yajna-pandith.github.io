@@ -1,1 +1,258 @@
-<h1>Welcome to My New Website</h1>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yajna Pandith - Personal Portfolio</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <h1>Yajna Pandith</h1>
+            <p>Computer Science Master's Student at RIT</p>
+        </div>
+    </header>
+
+    <section class="hero-section">
+        <video class="video-background" autoplay muted loop playsinline>
+            <source
+                src="https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-futuristic-devices-99786-large.mp4"
+                type="video/mp4">
+        </video>
+        <div class="video-overlay"></div>
+        <div class="hero-content">
+            <h1>Yajna Pandith</h1>
+            <p>Backend Software Engineer</p>
+            <p>A passionate Computer Science graduate student specializing in distributed systems and cloud technologies
+            </p>
+            <div class="cta-buttons">
+                <a href="#projects" class="cta-button cta-primary">
+                    <i class="fas fa-code"></i> View Projects
+                </a>
+                <a href="#contact" class="cta-button cta-secondary">
+                    <i class="fas fa-envelope"></i> Contact Me
+                </a>
+            </div>
+        </div>
+        <div class="scroll-indicator">
+            <i class="fas fa-chevron-down"></i>
+        </div>
+    </section>
+
+    <section class="section" id="about">
+        <div class="container">
+            <h2 class="section-title">About Me</h2>
+            <div class="about-content">
+                <div class="about-text">
+                    <p>I'm a Computer Science master's student at Rochester Institute of Technology, specializing in
+                        advanced software development and machine learning. With professional experience as a Software
+                        Engineer at New Street Tech, I've developed robust applications and microservices that have made
+                        significant impacts in the fintech sector.</p>
+                    <p>My academic journey includes a Bachelor's in Electronics and Communication with a minor in
+                        Computer Science from PES University, Bangalore. I combine theoretical knowledge with practical
+                        experience to create innovative solutions to complex problems.</p>
+                </div>
+                <div class="about-image">
+                    <img src="images/profile.jpg" alt="Yajna Pandith">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="education">
+        <div class="container">
+            <h2 class="section-title">Education</h2>
+            <div class="education-grid">
+                <div class="education-card">
+                    <h3>Rochester Institute of Technology</h3>
+                    <p class="degree">Master of Science in Computer Science</p>
+                    <p class="year">Expected Aug-2026</p>
+                    <p class="courses">Relevant Coursework:</p>
+                    <ul class="course-list">
+                        <li>Advanced Object Oriented Programming Concepts in Java</li>
+                        <li>Computational Problem Solving in Python</li>
+                        <li>Foundations of Algorithms</li>
+                        <li>Intro to Machine Learning & Artificial Intelligence</li>
+                    </ul>
+                </div>
+                <div class="education-card">
+                    <h3>PES University, Bangalore</h3>
+                    <p class="degree">Bachelor of Technology in Electronics and Communication</p>
+                    <p class="year">August-2022</p>
+                    <p class="minor">Minor in Computer Science</p>
+                    <p class="courses">Key Areas:</p>
+                    <ul class="course-list">
+                        <li>Data Structure & Algorithms</li>
+                        <li>Database Management Systems</li>
+                        <li>Operating Systems</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="skills">
+        <div class="container">
+            <h2 class="section-title">Technical Skills</h2>
+            <div class="skills-grid">
+                <div class="skill-category">
+                    <h3>Languages & Frameworks</h3>
+                    <ul class="skill-list">
+                        <li>Java, Spring Boot</li>
+                        <li>Python</li>
+                        <li>Golang</li>
+                        <li>Scala</li>
+                        <li>Apache Spark</li>
+                    </ul>
+                </div>
+                <div class="skill-category">
+                    <h3>Software & Tools</h3>
+                    <ul class="skill-list">
+                        <li>Git & Linux</li>
+                        <li>MongoDB & PostgreSQL</li>
+                        <li>Redis</li>
+                        <li>RabbitMQ</li>
+                        <li>REST API & gRPC</li>
+                    </ul>
+                </div>
+                <div class="skill-category">
+                    <h3>Cloud & DevOps</h3>
+                    <ul class="skill-list">
+                        <li>AWS S3</li>
+                        <li>SparkSQL</li>
+                        <li>Hyperledger Fabric</li>
+                        <li>Docker</li>
+                        <li>Analytical Problem Solving</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="projects">
+        <div class="container">
+            <h2 class="section-title">Projects</h2>
+            <div class="projects-grid">
+                <div class="project-card">
+                    <div class="project-content">
+                        <h3>Loan Origination System</h3>
+                        <p>A comprehensive system that delivered loans to farmers within 5 minutes using microservices
+                            architecture with rabbitMQ and gRPC.</p>
+                        <div class="project-tags">
+                            <span class="project-tag">Java Spring Boot</span>
+                            <span class="project-tag">MongoDB</span>
+                            <span class="project-tag">Microservices</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="project-card">
+                    <div class="project-content">
+                        <h3>Maze Solver</h3>
+                        <p>Java-based maze solver implementing DFS and BFS algorithms with grid visualization and
+                            modular design for easy integration of new search algorithms.</p>
+                        <div class="project-tags">
+                            <span class="project-tag">Java</span>
+                            <span class="project-tag">Algorithms</span>
+                            <span class="project-tag">Data Structures</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="project-card">
+                    <div class="project-content">
+                        <h3>Wordle Game</h3>
+                        <p>Interactive Wordle game with feedback system and input validation, featuring client-server
+                            architecture and iterative guess tracking.</p>
+                        <div class="project-tags">
+                            <span class="project-tag">Java</span>
+                            <span class="project-tag">Client-Server</span>
+                            <span class="project-tag">Game Development</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="project-card">
+                    <div class="project-content">
+                        <h3>Portfolio Optimizer</h3>
+                        <p>Python-based portfolio optimization using truncated SVD and grid search hyperparameter
+                            tuning, processing S&P 500 data for improved performance.</p>
+                        <div class="project-tags">
+                            <span class="project-tag">Python</span>
+                            <span class="project-tag">Machine Learning</span>
+                            <span class="project-tag">Financial Analysis</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="experience">
+        <div class="container">
+            <h2 class="section-title">Professional Experience</h2>
+            <div class="experience-grid">
+                <div class="experience-card">
+                    <h3>Software Engineer</h3>
+                    <p class="company">New Street Tech, Bangalore</p>
+                    <p class="duration">Aug 2022 - July 2024</p>
+                    <ul class="experience-list">
+                        <li>Developed Java Spring Boot application with MongoDB for field officer onboarding</li>
+                        <li>Created comprehensive Loan Origination System with microservices architecture</li>
+                        <li>Engineered banking services with Rest API integration for KYC verification</li>
+                        <li>Contributed to Hyperledger Fabric-based solutions for certificate management</li>
+                    </ul>
+                </div>
+                <div class="experience-card">
+                    <h3>Software Engineer Intern</h3>
+                    <p class="company">Beyond Square, Bangalore</p>
+                    <p class="duration">Aug 2021 - Dec 2021</p>
+                    <ul class="experience-list">
+                        <li>Developed data pipeline using AWS Glue, Spark, and Scala</li>
+                        <li>Optimized data workflows using S3 and MySQL</li>
+                        <li>Implemented complex data mappings with Spark SQL</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="contact">
+        <div class="container">
+            <h2 class="section-title">Contact Me</h2>
+            <div class="contact-content">
+                <p>I'm currently seeking Summer 2025 internship opportunities!</p>
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>yt9899@rit.edu</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-phone"></i>
+                        <span>+1 (585) 305-4086</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Rochester, New York</span>
+                    </div>
+                </div>
+                <div class="social-links">
+                    <a href="https://linkedin.com/in/YajnaPandith" class="social-link"><i
+                            class="fab fa-linkedin"></i></a>
+                    <a href="https://github.com/yajna-pandith" class="social-link"><i class="fab fa-github"></i></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Yajna Pandith. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+
+</html>
