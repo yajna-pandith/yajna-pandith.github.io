@@ -54,4 +54,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('scroll', animateOnScroll);
     animateOnScroll(); // Initial check
+});
+
+// Add scroll functionality for the scroll indicator
+document.querySelector('.scroll-indicator').addEventListener('click', function () {
+    const aboutSection = document.querySelector('#about');
+    if (aboutSection) {
+        aboutSection.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
+    }
 }); 
